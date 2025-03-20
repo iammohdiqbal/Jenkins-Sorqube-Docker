@@ -37,7 +37,7 @@
 3. Update and install Java:
    ```bash
    sudo apt update
-   sudo apt install openjdk-17-jre
+   sudo apt-get install default-jdk -y
    ```
 4. Install Jenkins:
    ```bash
