@@ -1,0 +1,54 @@
+pipeline {
+    agent any
+
+    environment {
+        AWS_HOST = "15.207.51.156"
+        AWS_USER = "ubuntu"  // Change if using Ubuntu (e.g., "ubuntu")
+        SSH_CREDENTIALS_ID = "ubuntu"
+        REMOTE_DIR = "/home/ubuntu/webfiles"  // Change as per your requirement
+    }
+
+    stages {
+        stage('Checkout Code') {
+            steps {
+                git branch: 'main', ubuntu: 'iammohdiqbal', url: 'https://github.com/iammohdiqbal/Jenkins-Sorqube-Docker.git'
+            }
+        }
+
+        stage('Transfer Files to AWS') {
+            steps {
+                script {
+                    sshagent(['ubuntu']) {
+                        sh """
+                        scp -o StrictHostKeyChecking=no -r * ${AWS_USER}@${AWS_HOST}:${REMOTE_DIR}
+                        """
+                    }
+                }
+            }
+        }
+
+        stage('Set Permissions & Restart Service') {
+            steps {
+                script {
+                    sshagent(['ubuntu']) {
+                        sh """
+                        ssh -o StrictHostKeyChecking=no ${AWS_USER}@${AWS_HOST} << EOF
+                        chmod +x ${REMOTE_DIR}/*.ssh
+                        sudo systemctl restart ssh  # Change service name as needed
+                        EOF
+                        """
+                    }
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "Deployment successful!"
+        }
+        failure {
+            echo "Deployment failed!"
+        }
+    }
+}
